@@ -24,7 +24,7 @@ db = SQLAlchemy(app)
 
 q = Queue(connection=conn)
 
-from models import Result
+import models
 
 
 ##########
@@ -60,7 +60,7 @@ def count_and_save_words(url):
 
     # save the results
     try:
-        result = Result(
+        result = models.Result(
             url=url,
             result_all=raw_word_count,
             result_no_stop_words=no_stop_words_count
@@ -92,7 +92,7 @@ def get_counts():
         url = 'http://' + url
     # start job
     job = q.enqueue_call(
-        func=count_and_save_words, args=(url,), result_ttl=5000
+        func="app.count_and_save_words", args=(url,), result_ttl=5000
     )
     # return created job id
     return job.get_id()
@@ -104,7 +104,7 @@ def get_results(job_key):
     job = Job.fetch(job_key, connection=conn)
 
     if job.is_finished:
-        result = Result.query.filter_by(id=job.result).first()
+        result = models.Result.query.filter_by(id=job.result).first()
         results = sorted(
             result.result_no_stop_words.items(),
             key=operator.itemgetter(1),
